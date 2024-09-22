@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendar</title>
+
+    <!-- FullCalendar 라이브러리 추가 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/ko.js"></script>
+
+    <style>
+        #calendar {
+            max-width: 900px;
+            margin: 40px auto;
+        }
+
+        /* 팝업 및 모달 스타일 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: block;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+
+        .modal-overlay.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+<!-- 달력 -->
+<div id="calendar"></div>
+
+<!-- 예약 내역 팝업 -->
+<div id="reservationPopup" class="modal">
+    <h3>예약 내역</h3>
+    <div id="reservationDetails"></div>
+    <button type="button" id="openReservationForm">예약하기</button>
+    <button type="button" id="closeReservationPopup">닫기</button>
+</div>
+
+<!-- 예약 추가 팝업 -->
+<div id="reservationForm" class="modal">
+    <h3>예약 추가</h3>
+    <form id="reservationFormSubmit" action="/add-reservation" method="post">
+        <label for="title">예약 제목:</label>
+        <input type="text" name="title" id="title" required><br><br>
+
+        <label for="start">시작 시간:</label>
+        <input type="datetime-local" name="start" id="start" required><br><br>
+
+        <label for="endTime">종료 시간:</label>
+        <input type="datetime-local" name="endTime" id="endTime" required><br><br>
+
+        <button type="submit">예약 추가</button>
+        <button type="button" id="cancelReservationForm">취소</button>
+    </form>
+</div>
+
+<form action="/add-reservation" method="post">
+    <input type="text" name="title" placeholder="예약 제목" required/>
+    <input type="datetime-local" name="start" required/>
+    <input type="datetime-local" name="endTime" required/>
+    <button type="submit">예약 추가</button>
+</form>
+
+<div id="modalOverlay" class="modal-overlay"></div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var calendarEl = document.getElementById('calendar');
+        var today = new Date();
+        var firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        var lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+        var reservations = /*[[${reservations}]]*/ [];
+
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            locale: 'ko',
+            validRange: {
+                start: firstDayOfMonth,
+                end: lastDayOfMonth
+            },
+            headerToolbar: {
+                left: '',
+                center: 'title',
+                right: ''
+            },
+            events: reservations.map(function(reservation) {
+                return {
+                    title: reservation.title,
+                    start: reservation.start,
+                    end: reservation.endTime,
+                    id: reservation.id
+                };
+            })
+        });
+
+        calendar.render();
+
+        // 날짜 클릭 시 예약 내역 팝업 열기
+        calendar.on('dateClick', function(info) {
+            var clickedDate = info.dateStr;
+            var reservationDetails = reservations.filter(function(reservation) {
+                return reservation.start.startsWith(clickedDate);
+            });
+
+            var detailsHtml = '';
+            if (reservationDetails.length > 0) {
+                reservationDetails.forEach(function(reservation) {
+                    detailsHtml += '<p>' + reservation.title + ' (' + reservation.start + ' ~ ' + reservation.endTime + ')</p>';
+                });
+            } else {
+                detailsHtml = '<p>예약 내역이 없습니다.</p>';
+            }
+
+            document.getElementById('reservationDetails').innerHTML = detailsHtml;
+            showPopup('reservationPopup');
+        });
+
+        // 예약 폼 팝업 열기
+        document.getElementById('openReservationForm').addEventListener('click', function() {
+            closeModal(); // 예약 내역 팝업 닫기
+            showPopup('reservationForm'); // 예약 추가 팝업 열기
+        });
+
+        // 예약 내역 팝업 닫기
+        document.getElementById('closeReservationPopup').addEventListener('click', function() {
+            closeModal();
+        });
+
+        // 예약 폼 취소 버튼
+        document.getElementById('cancelReservationForm').addEventListener('click', function() {
+            closeModal();
+        });
+
+        // 팝업 열기 함수
+        function showPopup(popupId) {
+            document.getElementById(popupId).classList.add('active');
+            document.getElementById('modalOverlay').classList.add('active');
+        }
+
+        // 팝업 닫기 함수
+        function closeModal() {
+            document.querySelectorAll('.modal').forEach(function(modal) {
+                modal.classList.remove('active');
+            });
+            document.getElementById('modalOverlay').classList.remove('active');
+        }
+
+    });
+</script>
+
+</body>
+</html>
