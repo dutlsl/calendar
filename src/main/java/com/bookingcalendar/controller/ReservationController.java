@@ -3,9 +3,9 @@ package com.bookingcalendar.controller;
 import com.bookingcalendar.models.Reservation;
 import com.bookingcalendar.services.ReservationService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.ui.Model;
+import org.springframework.stereotype.Controller;
 
 import java.util.List;
 
@@ -18,22 +18,32 @@ public class ReservationController {
     @GetMapping("/")
     public String viewCalendar(Model model) {
         List<Reservation> reservations = reservationService.getAllReservations();
-        model.addAttribute("reservations", reservations);
-        return "calendar"; // calendar.html 템플릿 파일을 찾음
+        model.addAttribute("reservationsJson", reservations);
+
+        // 예약 데이터 로그 출력
+        System.out.println("Reservations: " + reservations);
+
+        return "calendar"; // calendar.html 템플릿 파일 반환
     }
 
     @PostMapping("/add-reservation")
+    @ResponseBody
     public String addReservation(@RequestParam("title") String title,
                                  @RequestParam("start") String start,
                                  @RequestParam("endTime") String endTime) {
         reservationService.addReservation(title, start, endTime);
-        return "redirect:/"; // 예약 후 메인 페이지로 리다이렉트
+        return "success"; // 성공 메시지 반환
     }
 
-
     @PostMapping("/delete-reservation")
+    @ResponseBody
     public String deleteReservation(@RequestParam("id") Long id) {
-        reservationService.deleteReservation(id);
-        return "redirect:/";
+        try {
+            reservationService.deleteReservation(id);
+            return "success";
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "fail";
+        }
     }
 }

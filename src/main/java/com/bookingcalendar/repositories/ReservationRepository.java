@@ -6,5 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
-    // 기본적인 CRUD는 JpaRepository가 제공
+    // 추가적인 쿼리 메서드가 필요한 경우 여기에 작성합니다.
 }

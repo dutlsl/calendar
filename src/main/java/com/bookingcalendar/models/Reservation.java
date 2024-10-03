@@ -22,6 +22,7 @@ public class Reservation {
         this.id = id;
     }
 
+    // 다른 Getter 및 Setter 메서드들
     public String getTitle() {
         return title;
     }
@@ -44,5 +45,15 @@ public class Reservation {
 
     public void setEndTime(LocalDateTime endTime) {
         this.endTime = endTime;  // 'end'를 'endTime'으로 수정
+    }
+
+    @Override
+    public String toString() {
+        return "Reservation{" +
+                "id=" + id +
+                ", title='" + title + '\'' +
+                ", start=" + start +
+                ", endTime=" + endTime +
+                '}';
     }
 }
